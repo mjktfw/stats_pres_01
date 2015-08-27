@@ -1,0 +1,133 @@
+---
+title: "shiny_stats_01"
+author: "mjktfw"
+date: "25 sierpnia 2015"
+output: ioslides_presentation
+runtime: shiny
+---
+
+```{r, include=FALSE}
+require(ggplot2)
+require(RColorBrewer)
+require(datasets)
+```
+
+```{r, include=FALSE}
+f.addSample <-
+  function(x, left = 0, changed = 1, highlight = FALSE, n = 1) {
+    if (!identical(highlight, FALSE)) {
+      x[x == highlight] <- changed
+      changed <- highlight
+    }
+    
+    isLeft <- x == left
+    nLeft <- sum(isLeft)
+    
+    which <- 
+      if (nLeft > 1) {
+        sample(seq_along(x)[isLeft], min(nLeft, n))
+      } else {
+        which(isLeft)
+      }
+    
+    x[which] <- changed
+    
+    return(x)
+  }
+
+f.hist <- function(
+  histDat,
+  histDat2,
+  histFill,
+  bin=.1,
+  pal=brewer.pal(brewer.pal.info['Paired', 'maxcolors'], 'Paired')
+) {
+  
+  p1 <-
+    ggplot(
+      data=data.frame(),
+      environment=environment()
+    ) +
+    
+    # Full histogram (full dataset, empty, lines only)
+    geom_histogram(aes(x = histDat),
+                   color = 'grey',
+                   fill = 'white',
+                   binwidth = bin
+    ) +
+    
+    # Stacked, partial histogram (chosen data, filled)
+    geom_histogram(aes(x = histDat2,
+                       fill = histFill),
+                   position = 'stack',
+                   binwidth = bin
+    ) +
+    
+    # Colors
+    scale_fill_manual(values = pal[c(1,7)], limits=c(1,2)) +
+    # scale_color_manual(values = pal[c(1,7) + 1]) +
+    
+    # Other
+    geom_rug(aes(x = histDat)) +
+    guides(color = FALSE, fill = FALSE) +
+    theme(
+      panel.grid = element_blank(),
+      panel.background = element_blank(),
+      axis.line = element_line(colour = 'black')
+    ) +
+    labs(x=sprintf('Temperature (%sC)', '\U00B0'))
+  
+  
+  print(p1)
+}
+
+```
+
+# Shiny Presentation
+
+## Histogram
+
+
+```{r, echo=FALSE}
+rvals <- reactiveValues()
+rvals$input <- rep(0, nrow(beaver1))
+
+inputPanel(
+  actionButton('add', label='Add samples'),
+  sliderInput('n', label='How many?', value=1, min = 1, max= 10, round = TRUE, width = '50%'),
+  actionButton('reset', label='Reset plot')
+)
+
+observeEvent(input$add, {
+  rvals$input <- f.addSample(rvals$input, highlight=2, n = input$n)
+})
+
+observeEvent(input$reset, {
+  rvals$input <- rep(0, nrow(beaver1))
+})
+
+renderPlot({
+  
+  vec <- rvals$input
+  
+  subs <- (vec %in% c(1,2))
+  histDat = beaver1$temp
+  histDat2 = histDat[subs]
+  histFill = factor(vec, levels=c(1,2))[subs]
+  f.hist(histDat, histDat2, histFill)
+})
+```
+
+## Slide with Bullets
+
+- Bullet 1
+- Bullet 2
+- Bullet 3
+
+## Slide with R Code and Output
+
+```{r}
+summary(cars)
+```
+
+
