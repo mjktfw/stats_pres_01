@@ -83,7 +83,7 @@ f.hist <- function(
 
 ```
 
-# Shiny Presentation
+# Descriptive statistics
 
 ## Histogram
 
